@@ -1,0 +1,87 @@
+.MODEL small
+.STACK 100h
+.DATA
+    msg_input  db "ENTER INPUT:$"
+    msg_output db "OUTPUT:$"
+.CODE
+
+MAIN PROC
+    mov ax, @DATA
+    mov ds, ax
+
+    ; Display input prompt
+    mov ah, 09h
+    lea dx, msg_input
+    int 21h
+
+    ; Newline
+    mov ah, 02h
+    mov dl, 0Dh
+    int 21h
+    mov dl, 0Ah
+    int 21h
+
+    ; Initialize
+    xor bx, bx          ; BX will store final binary result
+    mov cx, 16          ; Maximum 16 characters
+
+read_loop:
+    mov ah, 01h         ; Read character from user
+    int 21h
+
+    cmp al, 0Dh         ; If Enter is pressed, exit loop
+    je show_output
+
+    and al, 0Fh         ; Convert ASCII digit to number (0–9)
+    shl bx, 1           ; Shift BX left to make space
+    or bl, al           ; OR the digit into BX
+    loop read_loop      ; Repeat until CX=0
+
+show_output:
+    ; Newline
+    mov ah, 02h
+    mov dl, 0Dh
+    int 21h
+    mov dl, 0Ah
+    int 21h
+
+    ; Display "OUTPUT:"
+    mov ah, 09h
+    lea dx, msg_output
+    int 21h
+
+    ; Newline
+    mov ah, 02h
+    mov dl, 0Dh
+    int 21h
+    mov dl, 0Ah
+    int 21h
+
+    ; Prepare to print 16 binary digits
+    mov cx, 16
+
+print_loop:
+    shr bx, 1           ; Shift right, bit goes to carry
+    jc print_one        ; If carry is set, print '1'
+
+    ; Print '0'
+    mov ah, 02h
+    mov dl, '0'
+    int 21h
+    jmp continue_loop
+
+print_one:
+    ; Print '1'
+    mov ah, 02h
+    mov dl, '1'
+    int 21h
+
+continue_loop:
+    loop print_loop     ; Repeat for all bits
+
+    ; Exit program
+    mov ah, 4Ch
+    int 21h
+
+MAIN ENDP
+END MAIN

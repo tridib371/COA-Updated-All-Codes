@@ -1,0 +1,78 @@
+.MODEL small
+.STACK 100h
+.DATA  
+    msg_input  db "ENTER INPUT:$"
+    msg_output db "OUTPUT:$"
+.CODE     
+
+; ---------- Input Procedure ----------
+INPUT PROC   
+    ; Set DS
+    mov ax, @DATA
+    mov ds, ax 
+
+    ; Display prompt
+    mov ah, 09h
+    lea dx, msg_input
+    int 21h
+
+    ; Newline
+    mov ah, 02h
+    mov dl, 0Dh
+    int 21h
+    mov dl, 0Ah
+    int 21h
+
+    ; Read character
+    mov ah, 01h
+    int 21h
+    mov bl, al   ; Store input in BL
+
+    ret
+INPUT ENDP
+
+; ---------- Output Procedure ----------
+OUTPUT PROC
+    ; Set DS
+    mov ax, @DATA
+    mov ds, ax
+
+    ; Newline
+    mov ah, 02h
+    mov dl, 0Dh
+    int 21h
+    mov dl, 0Ah
+    int 21h
+
+    ; Display "OUTPUT:"
+    mov ah, 09h
+    lea dx, msg_output
+    int 21h
+
+    ; Newline
+    mov ah, 02h
+    mov dl, 0Dh
+    int 21h
+    mov dl, 0Ah
+    int 21h
+
+    ; Print stored character
+    mov ah, 02h
+    mov dl, bl
+    int 21h
+
+    ret
+OUTPUT ENDP
+
+; ---------- Main Program ----------
+MAIN PROC
+    mov ax, @DATA
+    mov ds, ax
+
+    call INPUT
+    call OUTPUT
+
+    mov ah, 4Ch
+    int 21h
+MAIN ENDP
+END MAIN

@@ -1,0 +1,106 @@
+.MODEL SMALL
+.STACK 100H
+
+.DATA
+    msg_input  DB 'INPUT: $'
+    msg_output DB 'OUTPUT: $'
+
+.CODE
+
+MAIN PROC
+    ; Setup data segment
+    MOV AX, @DATA
+    MOV DS, AX
+
+AGAIN:
+    ; Print INPUT prompt
+    MOV AH, 09h
+    LEA DX, msg_input
+    INT 21H
+
+    ; Newline
+    MOV AH, 02h
+    MOV DL, 0Dh
+    INT 21H
+    MOV DL, 0Ah
+    INT 21H
+
+    ; Initialize BX = 0, CL = 4 (bit shift step for hex digits)
+    XOR BX, BX
+    MOV CL, 4
+
+    ; Read first character
+    MOV AH, 01h
+    INT 21H
+
+WLOOP:
+    ; Exit if Enter key pressed
+    CMP AL, 0Dh
+    JE OUTPUT
+
+    ; Check if input is digit or letter
+    CMP AL, 39H      ; '9'
+    JG LETTER        ; If greater, it's A–F
+
+    ; It's 0–9
+    AND AL, 0Fh
+    JMP SHIFT
+
+LETTER:
+    SUB AL, 37H      ; Convert A–F to 10–15
+
+SHIFT:
+    SHL BX, CL       ; Shift left 4 bits
+    OR BL, AL        ; Store digit
+
+    ; Read next character
+    MOV AH, 01h
+    INT 21H
+    JMP WLOOP
+
+OUTPUT:
+    ; Print OUTPUT label
+    MOV AH, 09h
+    LEA DX, msg_output
+    INT 21H
+
+    ; Newline
+    MOV AH, 02h
+    MOV DL, 0Dh
+    INT 21H
+    MOV DL, 0Ah
+    INT 21H
+
+    ; Now print BX in hex, nibble by nibble
+    MOV CX, 4        ; 4 nibbles
+    MOV AH, 02h
+
+OOUT:
+    ; Extract lower nibble
+    MOV DL, BL
+    SHL DL, 4
+    SHR DL, 4
+
+    ; Rotate BX right to get next nibble for next loop
+    ROR BX, 4
+
+    ; Convert nibble to ASCII
+    CMP DL, 10
+    JGE LETTERP
+    ADD DL, 30H
+    INT 21H
+    JMP XLOOP
+
+LETTERP:
+    ADD DL, 37H
+    INT 21H
+
+XLOOP:
+    LOOP OOUT
+
+    ; Exit program
+    MOV AH, 4Ch
+    INT 21H
+
+MAIN ENDP
+END MAIN

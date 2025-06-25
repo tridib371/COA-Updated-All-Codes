@@ -1,0 +1,87 @@
+.MODEL small
+.STACK 100h
+.DATA
+    msg_input  db "ENTER INPUT:$"
+    msg_output db "OUTPUT:$"
+.CODE
+
+MAIN PROC
+    mov ax, @DATA
+    mov ds, ax
+
+    ; Display input prompt
+    mov ah, 09h
+    lea dx, msg_input
+    int 21h
+
+    ; Newline
+    mov ah, 02h
+    mov dl, 0Dh
+    int 21h
+    mov dl, 0Ah
+    int 21h
+
+    ; Initialize
+    xor bx, bx          ; BX stores the binary input
+    mov cx, 16          ; Allow up to 16 binary digits
+
+read_loop:
+    mov ah, 01h         ; Read character
+    int 21h
+
+    cmp al, 0Dh         ; Check if Enter is pressed
+    je show_output
+
+    and al, 0Fh         ; Convert ASCII to binary (0 or 1)
+    shl bx, 1           ; Shift BX left
+    or bl, al           ; Add current bit
+    loop read_loop
+
+show_output:
+    ; Newline
+    mov ah, 02h
+    mov dl, 0Dh
+    int 21h
+    mov dl, 0Ah
+    int 21h
+
+    ; Display "OUTPUT:"
+    mov ah, 09h
+    lea dx, msg_output
+    int 21h
+
+    ; Newline
+    mov ah, 02h
+    mov dl, 0Dh
+    int 21h
+    mov dl, 0Ah
+    int 21h
+
+    ; Prepare to print 16 bits (MSB to LSB using ROL)
+    mov cx, 16
+
+print_loop:
+    rol bx, 1           ; Rotate left, MSB to CF
+    jc print_one        ; If carry is set, print '1'
+
+    ; Print '0'
+    mov ah, 02h
+    mov dl, '0'
+    int 21h
+    jmp continue_loop
+
+print_one:
+    ; Print '1'
+    mov ah, 02h
+    mov dl, '1'
+    int 21h
+
+continue_loop:
+    loop print_loop     ; Repeat 16 times
+
+    ; Exit program
+    mov ah, 4Ch
+    int 21h
+
+MAIN ENDP
+END MAIN
